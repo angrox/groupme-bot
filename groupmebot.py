@@ -54,7 +54,7 @@ def botcmd(*args, **kwargs):
 
 class GroupMeBot(object):
     
-    def __init__(self, bot_token, bot_id, portnumber, ip='', commandprefix='.'):
+    def __init__(self, bot_token, bot_id, portnumber, ip='', commandprefix='.', apiurl='api.groupme.com'):
         """Initializes the groupme bot and sets up commands.
 
         If privatedomain is provided, it should be either
@@ -72,6 +72,7 @@ class GroupMeBot(object):
         self.__portnumber = portnumber
         self.__ip = ip
         self.__commandprefix = commandprefix
+        self.__apiurl = apiurl
         self.commands = {}
         for name, value in inspect.getmembers(self):
             if inspect.ismethod(value) and getattr(value, '_groupmebot_command', False):
@@ -85,6 +86,9 @@ class GroupMeBot(object):
 
     def getBotToken(self):
         return self.__bot_token
+
+    def getBotApiURL(self):
+        return self.__apiurl
 
     def start(self):
         try:
@@ -102,13 +106,13 @@ class GroupMeBot(object):
             return
         params = urllib.urlencode( {'bot_id': self.getBotToken(), 'text': msg} )
         headers = {"Content-type": "application/x-www-form-urlencoded",  "Accept": "text/plain"} 
-        conn = httplib.HTTPSConnection("api.groupme.com")
+        conn = httplib.HTTPSConnection(self.getBotApiURL())
         conn.request('POST', '/v3/bots/post', params, headers)
+        response=conn.getresponse()
+        print response
 
 
     def parseData(self, data):
-        #self.sendmessage("ack", data['user_id'])
-        
         splitline=unicode(data['text']).split(' ')
         cmd=splitline[0]
         args=splitline[1:]
