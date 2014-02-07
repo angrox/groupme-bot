@@ -54,7 +54,7 @@ def botcmd(*args, **kwargs):
 
 class GroupMeBot(object):
     
-    def __init__(self, bot_token, bot_id, portnumber, ip='', commandprefix='.', apiurl='api.groupme.com'):
+    def __init__(self, bot_token, bot_id, portnumber, ip='', commandprefix='.', apiurl='api.groupme.com', debug=False):
         """Initializes the groupme bot and sets up commands.
 
         If privatedomain is provided, it should be either
@@ -73,6 +73,7 @@ class GroupMeBot(object):
         self.__ip = ip
         self.__commandprefix = commandprefix
         self.__apiurl = apiurl
+        self.__debug = debug
         self.commands = {}
         for name, value in inspect.getmembers(self):
             if inspect.ismethod(value) and getattr(value, '_groupmebot_command', False):
@@ -80,6 +81,10 @@ class GroupMeBot(object):
                 self.commands[name] = value
     
 
+
+    def debug(self,txt):
+        if self.__debug == True:
+            print "[debug] "+txt
 
     def getBotID(self):
         return self.__bot_id
@@ -116,14 +121,18 @@ class GroupMeBot(object):
         splitline=unicode(data['text']).split(' ')
         cmd=splitline[0]
         args=splitline[1:]
+        self.debug("parseData: text = %s" % data['text'])
+        self.debug("parseData: cmd = %s" % cmd)
         if self.__commandprefix != '':
             if not cmd.startswith(self.__commandprefix):
                 return None
             else:
                 cmd = cmd.lstrip(self.__commandprefix)
+        self.debug("parseData: Found correct parsed command, checking it: %s" % cmd)
         if self.commands.has_key(cmd):
             try:
                 reply = self.commands[cmd](args)
+                self.debug("parseData: Reply = %s" % reply)
                 self.sendmessage(reply, data['user_id'])
             except Exception, e:
                 reply = "Error"
@@ -147,7 +156,6 @@ class BotHTTPServer(HTTPServer):
 
 # RequestHandler. Sends all messages back to the main class
 class GroupMeBotHTTPServer(BaseHTTPRequestHandler):
-    #Handler for the GET requests
     def do_GET(self):
         self.send_response(200)
         self.send_header('Content-type','text/html')
@@ -158,7 +166,6 @@ class GroupMeBotHTTPServer(BaseHTTPRequestHandler):
 
 
     def do_POST(self):
-        global postVars
         self.send_response(200)
         self.end_headers()
         varLen = int(self.headers['Content-Length'])
