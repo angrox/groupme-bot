@@ -78,7 +78,6 @@ class GroupMeBot(object):
                 name = getattr(value, '_groupmebot_command_name')
                 self.commands[name] = value
     
-        print self.commands
 
 
     def getBotID(self):
