@@ -106,7 +106,7 @@ class GroupMeBot(object):
             server.socket.close()
 
 
-    def sendmessage(self, msg, user_id ):
+    def sendMessage(self, msg, user_id ):
         if user_id == self.getBotID():
             return
         params = urllib.urlencode( {'bot_id': self.getBotToken(), 'text': msg} )
@@ -123,10 +123,12 @@ class GroupMeBot(object):
         args=splitline[1:]
         self.debug("parseData: text = %s" % data['text'])
         self.debug("parseData: cmd = %s" % cmd)
+        if data['user_id'] != self.__bot_user_id:
+            self.catchAll(args, data)
         if self.__commandprefix != '':
             if not cmd.startswith(self.__commandprefix):
                 if data['user_id'] != self.__bot_user_id:
-                    return self.catchall(args, data)
+                    return self.catchNoCmd(args, data)
                 else:
                     return None
             else:
@@ -136,13 +138,17 @@ class GroupMeBot(object):
             try:
                 reply = self.commands[cmd](args)
                 self.debug("parseData: Reply = %s" % reply)
-                self.sendmessage(reply, data['user_id'])
+                self.sendMessage(reply, data['user_id'])
             except Exception, e:
                 reply = "Error"
 
 
     # Will be called on every event: 
-    def catchall(self, args, data):
+    def catchAll(self, args, data):
+        return None
+
+    # Will be called on every event except commands
+    def catchNoCmd(self, args, data):
         return None
 
 
