@@ -17,7 +17,7 @@ class MyBot(GroupMeBot):
 
     def __init__(self, *args, **kwargs):
         ''' Initialize variables. '''
-        super(JarvisBot, self).__init__(*args, **kwargs)
+        super(MyBot, self).__init__(*args, **kwargs)
 
     # Here we are decorating the command function of the bot to give him 
     # commands to react upon. Must be called with the commandprefix, 
