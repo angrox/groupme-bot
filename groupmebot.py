@@ -54,7 +54,7 @@ def botcmd(*args, **kwargs):
 
 class GroupMeBot(object):
     
-    def __init__(self, bot_token, bot_id, portnumber, ip='', commandprefix='.', apiurl='api.groupme.com', debug=False):
+    def __init__(self, bot_token, bot_user_id, portnumber, ip='', commandprefix='.', apiurl='api.groupme.com', debug=False):
         """Initializes the groupme bot and sets up commands.
 
         If privatedomain is provided, it should be either
@@ -67,12 +67,12 @@ class GroupMeBot(object):
         is useful when using JabberBot with a single Jabber account
         and multiple instances that want to talk to each other.
         """
-        self.__bot_id = bot_id
-        self.__bot_token = bot_token
+        self.__bot_user_id = unicode(bot_user_id)
+        self.__bot_token = unicode(bot_token)
         self.__portnumber = portnumber
         self.__ip = ip
-        self.__commandprefix = commandprefix
-        self.__apiurl = apiurl
+        self.__commandprefix = unicode(commandprefix)
+        self.__apiurl = unicode(apiurl)
         self.__debug = debug
         self.commands = {}
         for name, value in inspect.getmembers(self):
@@ -87,7 +87,7 @@ class GroupMeBot(object):
             print "[debug] "+txt
 
     def getBotID(self):
-        return self.__bot_id
+        return self.__bot_user_id
 
     def getBotToken(self):
         return self.__bot_token
@@ -125,7 +125,10 @@ class GroupMeBot(object):
         self.debug("parseData: cmd = %s" % cmd)
         if self.__commandprefix != '':
             if not cmd.startswith(self.__commandprefix):
-                return None
+                if data['user_id'] != self.__bot_user_id:
+                    return self.catchall(args, data)
+                else:
+                    return None
             else:
                 cmd = cmd.lstrip(self.__commandprefix)
         self.debug("parseData: Found correct parsed command, checking it: %s" % cmd)
@@ -138,6 +141,12 @@ class GroupMeBot(object):
                 reply = "Error"
 
 
+    # Will be called on every event: 
+    def catchall(self, args, data):
+        return None
+
+
+    # Default help command:
     @botcmd
     def help(self, args):
         usage=[]
