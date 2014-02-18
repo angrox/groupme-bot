@@ -54,7 +54,7 @@ def botcmd(*args, **kwargs):
 
 class GroupMeBot(object):
     
-    def __init__(self, bot_token, bot_user_id, portnumber, ip='', commandprefix='.', apiurl='api.groupme.com', debug=False):
+    def __init__(self, bot_token, bot_user_id, portnumber, ip='', commandprefix='.', apiurl='api.groupme.com', callback=None, id_path=None, debug=False):
         """Initializes the groupme bot and sets up commands.
 
         If privatedomain is provided, it should be either
@@ -75,6 +75,9 @@ class GroupMeBot(object):
         self.__apiurl = unicode(apiurl)
         self.__debug = debug
         self.commands = {}
+        self.remotebots = {}
+        self.idpath = id_path
+        self.callback = callback
         for name, value in inspect.getmembers(self):
             if inspect.ismethod(value) and getattr(value, '_groupmebot_command', False):
                 name = getattr(value, '_groupmebot_command_name')
@@ -105,6 +108,35 @@ class GroupMeBot(object):
             print '^C received, shutting down ...'
             server.socket.close()
 
+    # Adds a remote bot. The URL is the id_path of the remote bot, the botfunc
+    # must be defined within this class and will be called.
+    def addRemoteBot(self, url, botfunc):
+        if url not in self.remotebots:
+            self.remotebots[url]=botfunc
+        print self.remotebots
+
+    def getRemoteBots(self):
+        return self.remotebots
+
+    def getRemoteBot(self, url):
+        if url in self.remotebots:
+            return self.remotebots[url]
+        return None
+
+    def getIdPath(self):
+        return self.idpath
+
+    def getCallback(self):
+        return self.callback
+
+    def sendtoRemoteBot(self, msg, url):
+        params = urllib.urlencode( {'text': msg, 'boturl': self.idpath, 'callback': self.callback} )
+        headers = {"Content-type": "application/x-www-form-urlencoded",  "Accept": "text/plain"} 
+        conn = httplib.HTTPConnection(url)
+        conn.request('POST', self.idpath, params, headers)
+        response=conn.getresponse()
+        return response
+        
 
     def sendMessage(self, msg, user_id ):
         if user_id == self.getBotID():
@@ -115,6 +147,7 @@ class GroupMeBot(object):
         conn.request('POST', '/v3/bots/post', params, headers)
         response=conn.getresponse()
         print response
+        return response
 
 
     def parseData(self, data):
@@ -185,7 +218,13 @@ class GroupMeBotHTTPServer(BaseHTTPRequestHandler):
         self.end_headers()
         varLen = int(self.headers['Content-Length'])
         postVars = json.JSONDecoder().decode(self.rfile.read(varLen))
-        self.server.botobj.parseData(postVars)
+        path=vars(self)['path']
+        remotebotcmd=self.server.botobj.getRemoteBot(path)
+        if remotebotcmd is not None:
+            rbc=getattr(self.server.botobj, remotebotcmd)
+            rbc(postVars)
+        else:
+            self.server.botobj.parseData(postVars)
 
         
 

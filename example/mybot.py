@@ -27,6 +27,18 @@ class MyBot(GroupMeBot):
         print "ack"
         return "ack"
 
+    # This is a function which can be called by a remotebot (in this case
+    # called examplebot2. It will be called, if the callbackurl from this bot 
+    # is called with the url of examplebot2. 
+    # So examplebot2 called: http://www.example.com:9834/examplebot2/
+    # Examplebot1 (this one) has defined that the function "examplebot2func" will be 
+    # called if a POST request comes to "/examplebot2/"
+    # The arguments of the POST request are stored in the dict "parseArgs" of this
+    # function
+    def examplebot2func(self, parseArgs):
+        print "this function was called by examplebot2"
+        print parseArgs
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -48,11 +60,18 @@ if __name__ == '__main__':
         port = config.getint('connection', 'port')
         ip = config.get('connection', 'ip')
         apiurl = config.get('connection', 'apiurl')
+        callback = config.get('connection', 'callback')
         bot_user_id = config.getint('groupmebot', 'bot_user_id')
         bot_token = config.get('groupmebot', 'bot_token')
+        id_path = config.get('groupmebot', 'id_path')
     except ConfigParser.NoSectionError as err:
         print "Error: %s " % err
         sys.exit(1)
 
-    mybot = MyBot(bot_user_id=bot_user_id, bot_token=bot_token, portnumber=port, ip=ip, apiurl=apiurl, debug=False)
+    mybot = MyBot(bot_user_id=bot_user_id, bot_token=bot_token, portnumber=port, ip=ip, apiurl=apiurl, callback=callback, id_path=id_path, debug=False)
+
+    # Add a remotebot: If the POST request received has the path /examplebot2/ the function
+    # examplebot2func will be called. 
+    mybot.addRemoteBot("/examplebot2/", "examplebot2func")
+
     mybot.start()
