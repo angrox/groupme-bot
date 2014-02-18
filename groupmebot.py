@@ -110,9 +110,9 @@ class GroupMeBot(object):
 
     # Adds a remote bot. The URL is the id_path of the remote bot, the botfunc
     # must be defined within this class and will be called.
-    def addRemoteBot(self, url, botfunc):
-        if url not in self.remotebots:
-            self.remotebots[url]=botfunc
+    def addRemoteBot(self, path, url, botfunc):
+        if path not in self.remotebots:
+            self.remotebots[path]={'func': botfunc, 'url': url}
         print self.remotebots
 
     def getRemoteBots(self):
@@ -129,8 +129,9 @@ class GroupMeBot(object):
     def getCallback(self):
         return self.callback
 
-    def sendtoRemoteBot(self, msg, url):
-        params = urllib.urlencode( {'text': msg, 'boturl': self.idpath, 'callback': self.callback} )
+    def sendtoRemoteBot(self, data, url):
+        data.update({ 'botpath': self.idpath, 'callback': self.callback })
+        params = urllib.urlencode( data )
         headers = {"Content-type": "application/x-www-form-urlencoded",  "Accept": "text/plain"} 
         conn = httplib.HTTPConnection(url)
         conn.request('POST', self.idpath, params, headers)
@@ -221,8 +222,8 @@ class GroupMeBotHTTPServer(BaseHTTPRequestHandler):
         path=vars(self)['path']
         remotebotcmd=self.server.botobj.getRemoteBot(path)
         if remotebotcmd is not None:
-            rbc=getattr(self.server.botobj, remotebotcmd)
-            rbc(postVars)
+            rbc=getattr(self.server.botobj, remotebotcmd['func'])
+            rbc(path, postVars)
         else:
             self.server.botobj.parseData(postVars)
 

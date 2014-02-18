@@ -35,9 +35,12 @@ class MyBot(GroupMeBot):
     # called if a POST request comes to "/examplebot2/"
     # The arguments of the POST request are stored in the dict "parseArgs" of this
     # function
-    def examplebot2func(self, parseArgs):
+    def examplebot2func(self, path, parseArgs):
         print "this function was called by examplebot2"
         print parseArgs
+        print "Path called: %s" % path
+        print "This are the informations if we need to send something back:"
+        print self.getRemoteBot(path)
 
 
 if __name__ == '__main__':
@@ -72,6 +75,6 @@ if __name__ == '__main__':
 
     # Add a remotebot: If the POST request received has the path /examplebot2/ the function
     # examplebot2func will be called. 
-    mybot.addRemoteBot("/examplebot2/", "examplebot2func")
+    mybot.addRemoteBot("/examplebot2/", "http://www.example2.com:6666", "examplebot2func")
 
     mybot.start()
